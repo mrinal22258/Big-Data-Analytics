@@ -1,0 +1,145 @@
+
+==================================================
+FINAL RESULTS COMPARISON
+==================================================
+All variables are now Python scalars:
+node_count: <class 'int'> = 7115
+edge_count: <class 'int'> = 103689
+wcc_size: <class 'int'> = 7066
+wcc_edges: <class 'int'> = 103663
+scc_size: <class 'int'> = 2316
+
+                            Metric   Ground Truth       Computed    Difference
+                             Nodes           7115           7115      0.000000
+                             Edges         103689         103689      0.000000
+               Largest WCC (nodes)   7066 (0.993)   7066 (0.993)      0.000000
+               Largest WCC (edges) 103663 (1.000) 103663 (1.000)      0.000000
+               Largest SCC (nodes)   1300 (0.183)   2316 (0.326)   1016.000000
+               Largest SCC (edges)  39456 (0.381)  57650 (0.556)  18194.000000
+       Avg. clustering coefficient         0.1409         0.1409      0.000002
+               Number of triangles         608389        1305761 697372.000000
+      Fraction of closed triangles        0.04564        0.26931      0.223671
+                          Diameter              7              7      0.000000
+Effective diameter (90-percentile)            3.8            6.0      2.200000
+
+SUMMARY:
+Number of metrics: 11
+Perfect matches (difference = 0): 5
+Close matches (difference < 0.001): 6
+Maximum difference: 697372
+Perfect matches: Nodes, Edges, Largest WCC (nodes), Largest WCC (edges), Diameter
+
+Largest differences:
+  Number of triangles: 697372.000000
+  Largest SCC (edges): 18194.000000
+  Largest SCC (nodes): 1016.000000
+
+======================================================================
+DETAILED COMPARISON REPORT - MANUAL IMPLEMENTATION
+======================================================================
+
+METRIC-BY-METRIC ANALYSIS:
+----------------------------------------------------------------------
+
+1. Nodes
+   Ground Truth: 7115
+   Computed:     7115
+   Difference:   0.000000
+   Accuracy:     Perfect
+   Discussion:   Perfect match. Node counting is deterministic using simple union of source and destination nodes.
+
+2. Edges
+   Ground Truth: 103689
+   Computed:     103689
+   Difference:   0.000000
+   Accuracy:     Perfect
+   Discussion:   Perfect match. Edge counting using count() on deduplicated edges DataFrame is exact.
+
+3. Largest WCC (nodes)
+   Ground Truth: 7066
+   Computed:     7066
+   Difference:   0.000000
+   Accuracy:     Perfect
+   Discussion:   Result from manual BFS-based WCC implementation. Accuracy depends on: (1) Complete BFS convergence across all iterations, (2) Proper handling of undirected edges (both directions), (3) Correct component label propagation. Any discrepancy suggests incomplete graph traversal or early termination.
+
+4. Largest WCC (edges)
+   Ground Truth: 103663
+   Computed:     103663
+   Difference:   0.000000
+   Accuracy:     Perfect
+   Discussion:   Edge counting within identified WCC. Accuracy depends on: (1) Correct WCC node identification (from previous step), (2) Proper edge filtering where both endpoints are in the component. Discrepancy would indicate issues in component membership or edge filtering logic.
+
+5. Largest SCC (nodes)
+   Ground Truth: 1300
+   Computed:     2316
+   Difference:   1016.000000
+   Accuracy:     Poor
+   Discussion:   Result from manual Kosaraju's algorithm implementation. Accuracy depends on: (1) Correct first DFS traversal and finish time computation, (2) Proper graph transposition, (3) Correct second DFS on transposed graph in reverse finish time order, (4) Complete convergence of both DFS phases. Large discrepancy suggests algorithmic implementation errors.
+
+6. Largest SCC (edges)
+   Ground Truth: 39456
+   Computed:     57650
+   Difference:   18194.000000
+   Accuracy:     Poor
+   Discussion:   Edge counting within identified SCC. Depends on: (1) Correct SCC node identification from Kosaraju's algorithm, (2) Proper directed edge filtering (both src and dst must be in SCC). Note: Only directed edges within the component are counted.
+
+7. Avg. clustering coefficient
+   Ground Truth: 0.1409
+   Computed:     0.14089784589308724
+   Difference:   0.000002
+   Accuracy:     Excellent
+   Discussion:   Manual implementation using neighbor intersection method. Potential sources of discrepancy: (1) Handling of nodes with degree < 2 (should be excluded or set to 0), (2) Triangle counting methodology - using set intersection vs edge lookups, (3) Floating-point precision in division operations, (4) Possible double-counting of edges in undirected graph interpretation, (5) Aggregation and averaging methodology in distributed Spark environment.
+
+8. Number of triangles
+   Ground Truth: 608389
+   Computed:     1305761
+   Difference:   697372.000000
+   Accuracy:     Poor
+   Discussion:   Manual triangle counting implementation. Potential issues: (1) Triple-counting prevention (each triangle counted once, not thrice), (2) Proper handling of directed vs undirected edges, (3) Efficient set intersection logic for finding closed triangles, (4) Correct deduplication of triangle instances, (5) Complete graph coverage without missing any triangles. Large discrepancy suggests fundamental algorithmic issues.
+
+9. Fraction of closed triangles
+   Ground Truth: 0.04564
+   Computed:     0.2693108834436303
+   Difference:   0.223671
+   Accuracy:     Fair
+   Discussion:   Significant discrepancy likely due to formula interpretation. Should be: (3 × triangles) / (3 × triangles + open_triplets) or equivalently triangles / (triangles + open_triplets/3). Common errors: (1) Using wrong denominator (total_triplets vs sum of closed and open), (2) Not accounting for the factor of 3 (each triangle appears in 3 triplets), (3) Incorrect open triplet counting, (4) Confusion with clustering coefficient formula. Requires methodology review.
+
+10. Diameter
+   Ground Truth: 7
+   Computed:     7
+   Difference:   0.000000
+   Accuracy:     Perfect
+   Discussion:   2-sweep BFS approximation on undirected graph. Potential issues: (1) Limited iteration count (may not reach all nodes in 12 iterations), (2) Working on SCC subset (2316 nodes) instead of full WCC (7066 nodes) - diameter should be computed on largest WCC, not SCC, (3) Graph conversion to undirected may have issues, (4) BFS convergence detection may terminate early, (5) Distance calculation errors. Key issue: Computing on wrong component!
+
+11. Effective diameter (90-percentile)
+   Ground Truth: 3.8
+   Computed:     6.0
+   Difference:   2.200000
+   Accuracy:     Poor
+   Discussion:   90th percentile of sampled shortest paths. Issues: (1) Using SCC instead of WCC for calculation, (2) Sample size (20%) may be too small or unrepresentative, (3) Two-sweep sampling may bias results, (4) Limited BFS iterations affect path length accuracy, (5) Percentile calculation on combined samples from two sweeps may not represent true distribution. Should sample more node pairs or use ANF (Approximate Neighborhood Function) for better accuracy.
+
+======================================================================
+OVERALL ASSESSMENT - MANUAL IMPLEMENTATION
+======================================================================
+Accuracy Distribution:
+  Perfect     :  5 metrics ( 45.5%)
+  Excellent   :  1 metrics (  9.1%)
+  Fair        :  1 metrics (  9.1%)
+  Poor        :  4 metrics ( 36.4%)
+
+Key Findings:
+• 5/11 metrics have perfect accuracy
+• Basic graph properties (nodes, edges) are computed exactly
+• Connected component algorithms need verification:
+  - WCC: Check BFS convergence and undirected edge handling
+  - SCC: Verify Kosaraju's algorithm implementation
+• Triangle-based metrics need review:
+  - Triangle counting: Verify deduplication and algorithm correctness
+  - Closed fraction: Review formula and methodology
+  - Clustering coefficient: Check neighbor intersection logic
+• Distance metrics (diameter, effective diameter) have issues:
+  - Currently computed on SCC instead of WCC
+  - Need more BFS iterations for full convergence
+  - Consider using largest WCC for diameter calculation
+
+Overall Assessment: 5/11 metrics perfect, 6/11 within 1% accuracy
