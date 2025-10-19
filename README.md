@@ -1,3 +1,4 @@
+© 2025 Kumar Mrinal. All rights reserved.
 # Big Data Analytics – Monsoon 2025  
 
 **Instructor:** Prof. Vikram Goyal  
@@ -5,5 +6,5 @@
 
 ## 📌 Course Overview  
 
-This repository contains solution to assignments for the **Big Data Analytics** course offered in **Monsoon Semester 2025** at IIIT-Delhi.  
+This repository contains my solution to assignments for the **Big Data Analytics** course offered in **Monsoon Semester 2025** at IIIT-Delhi.  
 
