@@ -6,5 +6,5 @@
 
 ## 📌 Course Overview  
 
-This repository contains my solution to assignments for the **Big Data Analytics** course offered in **Monsoon Semester 2025** at IIIT-Delhi.  
+This repository contains my solution to assignments for the **Big Data Analytics** course offered in **Monsoon Semester 2025** at IIIT-Delhi covering **Apache Spark, Hadoop, Neo4j, Giraph, MapReduce**.
 
