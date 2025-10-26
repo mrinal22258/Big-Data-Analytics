@@ -1,0 +1,58 @@
+# Connection details
+URI = "neo4j+s://155cc552.databases.neo4j.io"
+AUTH = ("neo4j", "USED MY PASS")
+driver = GraphDatabase.driver(URI, auth=AUTH)
+
+# Nodes: 7,115
+# Edges: 103,689
+
+
+###Load data in neo4j
+'''
+// Clear existing data
+MATCH (n) DETACH DELETE n;
+
+// Create unique constraint
+CREATE CONSTRAINT user_id IF NOT EXISTS
+FOR (u:User) REQUIRE u.id IS UNIQUE;
+
+// Load nodes from Google Drive CSV
+LOAD CSV WITH HEADERS FROM 'https://drive.google.com/uc?id=18kfz6J9MiTSLDF5s9wGG-RZ52uGFr7Vc&export=download' AS row
+CREATE (:User {id: toInteger(row.id)});
+
+// Load edges from Google Drive CSV
+LOAD CSV WITH HEADERS FROM 'https://drive.google.com/uc?id=1mTbuUcUh2-3BNirwZWb6OpFEe1d5htBP&export=download' AS row
+MATCH (src:User {id: toInteger(row.src)}), (dst:User {id: toInteger(row.dst)})
+CREATE (src)-[:VOTED_FOR]->(dst);
+
+
+Connected! Running metrics...
+1. Counting nodes and edges...
+   Nodes: 7115, Edges: 103689
+   Time: 0.584s
+2. Sampling 500 nodes...
+   Sampled 500 nodes
+3. Computing WCC (approx)...
+   Largest WCC: 7066 nodes
+   Time: 17.542s
+4. Computing SCC (approx)...
+   Largest SCC: 7066 nodes
+   Time: 7.249s
+5. Computing triangle counts...
+   Triangles: 131925
+   Time: 1.444s
+6. Computing Clustering Coefficient...
+   Avg CC: 0.1611
+   Time: 2.465s
+7. Computing Diameter (approx)...
+   Diameter: 2
+   Time: 0.450s
+==================================================
+RESULTS SUMMARY
+==================================================
+basic_count         : 0.584s
+wcc                 : 17.542s
+scc                 : 7.249s
+triangles           : 1.444s
+clustering          : 2.465s
+diameter            : 0.450s
